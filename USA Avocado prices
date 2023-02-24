@@ -1,0 +1,59 @@
+                       --In this project, i analised the data on avocado prices and sales volume  in multiple US markets--
+
+---Select Columns
+select Small_Bags, Large_Bags 
+from avocado
+
+--- Filter Data
+select * 
+from avacado
+where region = 'Orlando'
+
+--- Group Data 
+
+select region, avg(AveragePrice) AS price
+from avocado
+group by region
+
+---- conditional formating 
+
+with region_group as (select region, avg(AveragePrice) AS price
+from avocado
+group by region)
+
+select region,
+	case when price > 1.40 then 'Expensive' else 'Inexpensive' end AS Price_category
+	from region_group
+
+--- Unpivot Data and top results 
+--- select top 10 type, small_bags, large_bags
+	select type , category, amount
+	from avocado
+	unpivot (amount for category in (small_bags, large_bags)
+	) as unpivot_bags
+
+--- Merge
+---- Average prices  
+
+	select 
+	Date,
+	AveragePrice,
+	case when Holiday is null then 'normal' else Holiday end as Category 
+	from
+	(select a.date, b.Holiday, a.AveragePrice from avocado as a
+		left join dbo.holiday as b
+		on a.date = b.date) tab1
+
+
+----- comparing pricess on noraml days and holidays
+select category, Avg(AveragePrice) As Price from 
+(select 
+	Date, 
+	AveragePrice,
+	case when Holiday is null then 'normal' else Holiday end as Category 
+	from
+	(select a.date, b.Holiday, a.AveragePrice from avocado as a
+		left join dbo.holiday as b
+		on a.date = b.date) tab1) tab2
+	group by Category
+	order by 2 desc
