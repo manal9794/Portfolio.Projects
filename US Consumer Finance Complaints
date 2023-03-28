@@ -1,0 +1,78 @@
+About Dataset
+Each week the CFPB sends thousands of consumers’ complaints about financial products and services to companies for response. Those complaints are published here
+after the company responds or after 15 days, whichever comes first. By adding their voice, consumers help improve the financial marketplace.
+{ Source: Kaggle}
+
+
+
+--- which products has the the highest and lowest complaints--- 
+SELECT product, COUNT(*) AS count
+FROM ['consumer_complaints - Copy$']
+GROUP BY product
+order by count desc
+
+
+ --Most frequent complaints and its type of product-- 
+SELECT product, issue, COUNT(*) AS count
+FROM ['consumer_complaints - Copy$']
+GROUP BY product, issue
+ORDER BY count DESC;
+
+--Which product has the highest number of complaints per each company-- 
+select company, product, count(*) As 'number of complaints'
+from ['consumer_complaints - Copy$']
+group by company, product
+order by 'number of complaints' desc 
+
+
+-- Most common complaint per state---
+SELECT State, Product, COUNT(*) AS [Complaints]
+FROM ['consumer_complaints - Copy$']
+WHERE state IS NOT NULL
+GROUP BY State, Product 
+ORDER BY  [Complaints] DESC
+
+--- Number times did  companies responded to their consumer's complaints on time--
+SELECT company, 
+       COUNT(CASE WHEN timely_response = 'yes' THEN 1 ELSE NULL END) AS num_yes_responses,
+       COUNT(CASE WHEN timely_response = 'no' THEN 1 ELSE NULL END) AS num_no_responses
+FROM ['consumer_complaints - Copy$']
+GROUP BY company
+
+---- Most common submission method
+select submitted_via, count (*) AS submission_method
+from ['consumer_complaints - Copy$']
+group by submitted_via
+order by submission_method desc
+
+--The number and types of complaints filed against each company
+SELECT company, COUNT(*) AS num_complaints
+FROM ['consumer_complaints - Copy$']
+GROUP BY company
+order by  num_complaints desc 
+
+ --analyze the avgrage response times 
+ SELECT company,  
+      AVG(DATEDIFF(minute, +[date_received], date_sent_to_company)) AS avg_response_time_minutes,
+       SUM(CASE WHEN [consumer_disputed?] = 'Yes' THEN 1 ELSE 0 END) AS num_disputes,
+       COUNT(*) AS num_complaints
+FROM ['consumer_complaints - Copy$']
+GROUP BY company
+
+--Number of disputes 
+select  [consumer_disputed?], count (*) as Total_count 
+from ['consumer_complaints - Copy$']
+order by total desc
+group by  [consumer_disputed?]
+
+-- Analying the company responds to consumers 
+select company_response_to_consumer, count (*) as total
+from ['consumer_complaints - Copy$']
+group by company_response_to_consumer
+order by total desc
+
+-- Number of disputes per company 
+select company,  [consumer_disputed?], count (*) as Total_count 
+from ['consumer_complaints - Copy$']
+group by company,  [consumer_disputed?]
+order by company
