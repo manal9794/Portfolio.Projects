@@ -6,8 +6,9 @@ Thank you for visiting my portfolio website!
 
 Tableau  Profile link:https://public.tableau.com/app/profile/manal7830 
 
-Retail store sales data dashboard using Power BI:shorturl.at/ceBMN
+Retail store sales data dashboard using Power BI: https://shorturl.at/ceBMN
  
  
  Email address: Manalsaid.oa@gmail.com
+ 
  Open to work 
