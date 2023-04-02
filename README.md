@@ -4,4 +4,9 @@ and self-development. I love uncovering valuable insights and delivering accurat
 
 Thank you for visiting my portfolio website!
 
-Tableau link:https://public.tableau.com/app/profile/manal7830 
+Tableau  Profile link:https://public.tableau.com/app/profile/manal7830 
+Retail store sales data dashboard using Power BI  link :file:///C:/Users/96655/Downloads/Store-Data-Dashboard.html
+ 
+ 
+ Email address: Manalsaid.oa@gmail.com
+ Open to work 
