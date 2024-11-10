@@ -1,0 +1,145 @@
+/****** 1.  Adding an "age group" column ******/
+
+ALTER TABLE [Healthcare_insurance].[dbo].[insurance]
+ALTER COLUMN age_group VARCHAR(30);
+
+UPDATE [Healthcare_insurance].[dbo].[insurance]
+SET age_group = CASE
+    WHEN age BETWEEN 18 AND 19 THEN '18 - 19 (Teenage group)'
+    WHEN age BETWEEN 20 AND 29 THEN '20s age group'
+    WHEN age BETWEEN 30 AND 39 THEN '30s age group'
+    WHEN age BETWEEN 40 AND 49 THEN '40s age group'
+    WHEN age BETWEEN 50 AND 59 THEN '50s age group'
+    WHEN age BETWEEN 60 AND 69 THEN '60s age group'
+    ELSE 'Other'
+END;
+/****** 2. Avg insurance charges for childless smokers and non-smokers by age group and  gender  ******/
+
+SELECT 
+    sex,
+    smoker, 
+    FORMAT(AVG(charges), '#,##0.00') AS 'avg charge', age_group 
+
+FROM 
+    [Healthcare_insurance].[dbo].[insurance]
+WHERE 
+    children = '0'
+GROUP BY 
+    sex, 
+    smoker,age_group 
+   
+ORDER BY 
+    sex, 
+    smoker,
+    age_group ASC;
+/****** 3. Avg inusrance charges by region and age group******/
+SELECT 
+
+	region,
+	age_group , 
+	format( avg(charges),'#,##0.00') AS 'avg charge'
+From
+	insurance
+Group by 
+	region,
+	age_group
+Order by 
+	region, age_group
+
+/****** 4. Avg insurance charges for childless women and women with 1 -5 children  ******/
+SELECT 
+
+	sex,
+	children,
+	format(avg(charges),'#,##0.00') AS 'avg charge' 
+From
+	insurance
+where sex = 'female'
+Group by 
+sex, children
+Order by 
+sex,
+children
+/****** 5. Avg insurance charges for childless men and men with 1 -5 children  ******/
+SELECT 
+
+	sex,
+	children,
+	format(avg(charges),'#,##0.00') AS 'avg charge' 
+From
+	insurance
+where sex = 'male'
+Group by 
+sex, children 
+Order by 
+sex,
+children
+/****** 6.  Avg insurance charges for parents who smoke  and dont smokers by age group and  gender******/
+SELECT 
+    sex,
+    smoker, 
+	children,
+    FORMAT(AVG(charges), '#,##0.00') AS 'avg charge', age_group 
+
+FROM 
+    [Healthcare_insurance].[dbo].[insurance]
+
+GROUP BY 
+    sex, 
+	children,
+    smoker,
+	age_group 
+   
+ORDER BY 
+    sex, 
+    smoker,
+    age_group ASC;
+/****** 7.  Comparing the average charges by BMI classification ( underweight, normal. overweight, obesity ) ******/
+SELECT 
+    sex,
+    age_group , 
+	 
+case 
+	when    bmi < '18.5'  then 'Underweight'
+	when bmi between '18.5' AND  '25' then 'Normal'
+	when bmi between  '25' AND '30' then 'Overweight'
+	when bmi  > '30'  then 'Obese'
+	END as 'bmi classification',
+	FORMAT(AVG(charges), '#,##0.00') AS 'avg charge'
+FROM 
+    [Healthcare_insurance].[dbo].[insurance]
+where smoker =0
+
+Group by 
+age_group, 
+sex, 
+case 
+	when    bmi < '18.5'  then 'Underweight'
+	when bmi between '18.5' AND  '25' then 'Normal'
+	when bmi between  '25' AND '30' then 'Overweight'
+	when bmi  > '30'  then 'Obese'
+	END 
+/******8. top 10 people with the highest  charges paid ******/
+SELECT top (10) *, case 
+	when    bmi < '18.5'  then 'Underweight'
+	when bmi between '18.5' AND  '25' then 'Normal'
+	when bmi between  '25' AND '30' then 'Overweight'
+	when bmi  > '30'  then 'Obese'
+	END as 'bmi classification'
+   
+FROM 
+    [Healthcare_insurance].[dbo].[insurance]
+	order by charges
+	desc
+/****** 9. Top 10 people with the lowest  charges paid ******/
+SELECT top  (10) *, case 
+	when    bmi < '18.5'  then 'Underweight'
+	when bmi between '18.5' AND  '25' then 'Normal'
+	when bmi between  '25' AND '30' then 'Overweight'
+	when bmi  > '30'  then 'Obese'
+	END as 'bmi classification'
+   
+FROM 
+    [Healthcare_insurance].[dbo].[insurance]
+	order by charges
+	asc
