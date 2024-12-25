@@ -1,0 +1,379 @@
+/***  Add a new column to show rows where the fields of study and careers match.**/
+Alter table career_change_prediction_dataset
+Add Study_and_Career_Match_Status varchar(50)
+update  career_change_prediction_dataset
+set Study_and_Career_Match_Status =
+       CASE
+           WHEN Field_of_Study= 'Arts' AND Current_Occupation = 'Artist' THEN 'Match'
+           WHEN Field_of_Study= 'Computer Science' AND Current_Occupation = 'Software Developer'  THEN 'Match'
+		   When  Field_of_Study= 'Education' AND Current_Occupation  = 'Teacher' THEN 'Match'
+		   When  Field_of_Study= 'Law' AND Current_Occupation  = 'Lawyer' THEN 'Match'
+		   When  Field_of_Study= 'Psychology' AND Current_Occupation  =  'Psychologist' THEN 'Match'
+		   When  Field_of_Study= 'Mechanical Engineering' AND Current_Occupation  = 'Mechanical Engineer' THEN 'Match'
+		   When  Field_of_Study= 'Business' AND Current_Occupation  = 'Business Analyst'  THEN 'Match'
+		   When  Field_of_Study= 'Computer Science' AND Current_Occupation  = 'Business Analyst'  THEN 'Match'
+		   When  Field_of_Study=  'Biology' AND Current_Occupation  = 'Biologist'  THEN 'Match'
+		   When  Field_of_Study= 'Medicine' AND Current_Occupation  =  'Doctor' THEN 'Match'
+		   When  Field_of_Study= 'Economics' AND Current_Occupation  = 'Economist' THEN 'Match'
+        
+           ELSE 'No Match'
+		   End
+/*** Identify the top and bottom fields of study most associated with career changes.**/
+Select 
+	 count(Field_of_Study) AS 'Number_of_Entries', Field_of_Study, Current_Occupation	
+From
+	career_change_prediction_dataset
+Where
+	Study_and_Career_Match_Status = 'Match'
+Group by 
+  Field_of_Study,
+  Current_Occupation,
+  Study_and_Career_Match_Status 
+ Order by
+  Number_of_Entries desc
+/*** Top and Bottom Occupations Chosen Post-Career Change.**/
+Select count(Current_Occupation) as 'Number_of_Entries' ,Current_Occupation
+From 
+career_change_prediction_dataset
+WHERE
+Study_and_Career_Match_Status  =  'No Match'
+Group by
+   Current_Occupation
+order by 
+Number_of_Entries desc
+/*** the percentage of individuals whose current occupation matches or does not match their field of study.**/
+SELECT 
+    Study_and_Career_Match_Status,
+    round(CAST(COUNT(*) AS FLOAT) / (SELECT COUNT(*) FROM career_change_prediction_dataset),2) * 100 AS Percentage
+FROM 
+    career_change_prediction_dataset
+GROUP BY 
+    Study_and_Career_Match_Status;
+/*** Career Changers interested in changing their fields again.**/ 
+ SELECT
+	Field_of_Study,
+	Current_Occupation,
+	count(*) AS Number_of_Individuals
+FROM
+	[career_dataset].[dbo].[career_change_prediction_dataset]
+Where
+	Study_and_Career_Match_Status = 'No Match' 
+	AND Career_Change_Interest = 1 
+Group by
+	Field_of_Study,
+	Current_Occupation
+Order by
+	Number_of_Individuals desc
+/*** Average Job Satisfaction levels of Occupations ***/  
+SELECT
+    Current_Occupation,
+    AVG(Job_Satisfaction) AS Average_Job_Satisfaction
+FROM
+    [career_dataset].[dbo].[career_change_prediction_dataset]
+GROUP BY
+    Current_Occupation
+ORDER BY 
+    Average_Job_Satisfaction DESC;
+/** Analyze relationships between job satisfaction and: Salary. Job security. Work-life balance.Years of experience **/
+WITH CategorizedSalaries AS (
+    SELECT 
+        CASE 
+            WHEN Salary <= 50000 THEN 'Low Income'
+            WHEN Salary BETWEEN 50001 AND 90000 THEN 'Middle Income'
+            WHEN Salary BETWEEN 90001 AND 150000 THEN 'Upper-Middle Income'
+            WHEN Salary > 150000 THEN 'Upper Income'
+            ELSE 'Unknown'
+        END AS Salary_Category,
+        Job_Satisfaction
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Salary_Category,
+    AVG(Job_Satisfaction) AS Average_Job_Satisfaction
+   
+FROM CategorizedSalaries
+GROUP BY Salary_Category
+ORDER BY Salary_Category;
+ 
+ WITH Categorizedjobsecurities AS (
+    SELECT 
+        CASE 
+            WHEN Job_Security BETWEEN 1 AND 3 THEN 'Low'
+            WHEN Job_Security BETWEEN 4 AND 7 THEN 'Medium'
+            WHEN Job_Security BETWEEN 8 AND 10 THEN 'High'
+            ELSE 'Unknown'
+        END AS Job_Security_Level,
+        Job_Satisfaction
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Job_Security_Level, 
+    AVG(Job_Satisfaction) AS Avg_Job_Satisfaction
+FROM Categorizedjobsecurities
+GROUP BY Job_Security_Level;
+WITH CategorizedWorkLife AS (
+    SELECT 
+        CASE 
+            WHEN Work_Life_Balance BETWEEN 1 AND 3 THEN 'Low'
+            WHEN Work_Life_Balance BETWEEN 4 AND 7 THEN 'Medium'
+            WHEN Work_Life_Balance BETWEEN 8 AND 10 THEN 'High'
+            ELSE 'Unknown'
+        END AS Work_Life_Balance_Level,
+        Job_Satisfaction
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Work_Life_Balance_Level,
+    AVG(Job_Satisfaction) AS Avg_Job_Satisfaction
+FROM CategorizedWorkLife
+GROUP BY Work_Life_Balance_Level;
+WITH YOE AS (
+    SELECT 
+        CASE 
+            
+    WHEN Years_of_Experience BETWEEN 0 AND 5 THEN 'Entry-Level (0–5 years)'
+    WHEN Years_of_Experience BETWEEN 6 AND 10 THEN 'Early Mid-Level (6–10 years)'
+    WHEN Years_of_Experience BETWEEN 11 AND 20 THEN 'Mid-Level (11–20 years)'
+    WHEN Years_of_Experience BETWEEN 21 AND 30 THEN 'Senior-Level (21–30 years)'
+    WHEN Years_of_Experience > 30 THEN 'Veteran-Level (31+ years)'
+    ELSE 'Unknown'
+END AS Experience_Level,
+        Job_Satisfaction
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Experience_Level,
+    AVG(Job_Satisfaction) AS Avg_Job_Satisfaction
+FROM YOE
+GROUP BY Experience_Level
+/** relationships between job satisfaction, experience levels and gender **/
+WITH YOE AS (
+    SELECT 
+        CASE 
+            
+    WHEN Years_of_Experience BETWEEN 0 AND 5 THEN 'Entry-Level (0–5 years)'
+    WHEN Years_of_Experience BETWEEN 6 AND 10 THEN 'Early Mid-Level (6–10 years)'
+    WHEN Years_of_Experience BETWEEN 11 AND 20 THEN 'Mid-Level (11–20 years)'
+    WHEN Years_of_Experience BETWEEN 21 AND 30 THEN 'Senior-Level (21–30 years)'
+    WHEN Years_of_Experience > 30 THEN 'Veteran-Level (31+ years)'
+    ELSE 'Unknown'
+END AS Experience_Level,Gender,
+        Job_Satisfaction
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Experience_Level,Gender,
+    AVG(Job_Satisfaction) AS Avg_Job_Satisfaction
+FROM YOE
+GROUP BY Gender,Experience_Level
+/** relationship between job satisfaction and education level **/
+Select
+  Education_Level , 
+  AVG(Job_Satisfaction) AS Avg_Job_Satisfaction
+From 
+  career_change_prediction_dataset
+Group by
+  Education_Level
+/****** Examine relationships between career change interest and Salary, Job satisfaction,Job security, andWork-life balance.******/
+WITH CategorizedJobSatisfaction AS (
+    SELECT
+        CASE 
+            WHEN Job_Satisfaction between '1' AND '3' THEN 'Low '
+			WHEN Job_Satisfaction between '4' AND '7' THEN 'Medium '
+			WHEN Job_Satisfaction between '8' AND '10' THEN 'High'
+            ELSE 'Unknown'
+        END AS Job_Satisfaction_Level ,
+        Career_Change_Interest
+    FROM 
+        career_change_prediction_dataset
+)
+SELECT 
+    Job_Satisfaction_Level,
+    COUNT(*) AS Career_Change_Count
+FROM 
+   CategorizedJobSatisfaction
+WHERE 
+    Career_Change_Interest = 1
+GROUP BY 
+    Job_Satisfaction_Level
+Order by 
+	Career_Change_Count desc
+WITH CategorizedSalaries AS (
+    SELECT
+        CASE 
+            WHEN Salary <= 50000 THEN 'Low Income'
+            WHEN Salary BETWEEN 50001 AND 90000 THEN 'Middle Income'
+            WHEN Salary BETWEEN 90001 AND 150000 THEN 'Upper-Middle Income'
+            WHEN Salary > 150000 THEN 'Upper Income'
+            ELSE 'Unknown'
+        END AS Salary_Category,
+        Career_Change_Interest
+    FROM 
+        career_change_prediction_dataset
+)
+SELECT 
+    Salary_Category,
+    COUNT(*) AS Career_Change_Count
+FROM 
+    CategorizedSalaries
+WHERE 
+    Career_Change_Interest = 1
+GROUP BY 
+    Salary_Category;
+WITH Categorizedjobsecurities AS (
+    SELECT 
+        CASE 
+            WHEN Job_Security BETWEEN 1 AND 3 THEN 'Low'
+            WHEN Job_Security BETWEEN 4 AND 7 THEN 'Medium'
+            WHEN Job_Security BETWEEN 8 AND 10 THEN 'High'
+            ELSE 'Unknown'
+        END AS Job_Security_Level,
+        Career_Change_Interest
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Job_Security_Level, 
+   Count (*) AS Career_Change_Count
+FROM
+	Categorizedjobsecurities
+WHERE 
+    Career_Change_Interest = 1
+GROUP BY 
+    Job_Security_Level
+Order by 
+	Career_Change_Count desc
+WITH CategorizedWorkLife AS (
+    SELECT 
+        CASE 
+            WHEN Work_Life_Balance BETWEEN 1 AND 3 THEN 'Low'
+            WHEN Work_Life_Balance BETWEEN 4 AND 7 THEN 'Medium'
+            WHEN Work_Life_Balance BETWEEN 8 AND 10 THEN 'High'
+            ELSE 'Unknown'
+        END AS Work_Life_Balance_Level,
+        Career_Change_Interest
+    FROM career_change_prediction_dataset
+)
+SELECT 
+    Work_Life_Balance_Level,
+    Count(*) AS Career_Change_Count
+From 
+	CategorizedWorkLife 
+WHERE 
+    Career_Change_Interest = 1
+GROUP BY 
+    Work_Life_Balance_Level
+Order by 
+	Career_Change_Count desc
+/****** Analyze the relationship between industry growth rate and career changes.******/
+Select 
+	Industry_Growth_Rate, 
+	Career_Change_Interest,
+	Count (*) AS Career_Change_Count
+From 
+	career_change_prediction_dataset
+Group by
+	Industry_Growth_Rate,
+	Career_Change_Interest
+Order by 
+	 Industry_Growth_Rate,
+	 Career_Change_Interest
+/******Assess how family influence correlates with career-field mismatches and changes. ******/
+Select 
+	Study_and_Career_Match_Status,
+	Family_Influence,
+	Count (*) AS Career_Change_Count	
+From 
+	career_change_prediction_dataset
+Where 
+	Career_Change_Interest = 1
+Group by 
+	Study_and_Career_Match_Status,
+	Family_Influence
+Order by
+	Study_and_Career_Match_Status ASC,
+	Career_Change_Count desc;
+/****** Fields of Study with the Highest Skills Gap ******/
+SELECT 
+    Field_of_Study,  
+    AVG(Skills_Gap) AS Average_Skills_Gap
+FROM 
+    career_change_prediction_dataset
+GROUP BY 
+    Field_of_Study
+ORDER BY 
+    Average_Skills_Gap DESC;
+/****** which careers offer mentorship most frequently.******/
+SELECT 
+    Current_Occupation,  
+    COUNT(*) AS Number_of_Mentorship_Available
+FROM 
+    career_change_prediction_dataset
+WHERE 
+    Mentorship_Available = 1
+GROUP BY 
+    Current_Occupation
+ORDER BY 
+    Number_of_Mentorship_Available DESC;
+/****** which current careers are most associated with individuals holding certifications.******/
+SELECT 
+    Current_Occupation,
+	count (Certifications) AS Number_of_People_with_Certifications
+FROM 
+    career_change_prediction_dataset
+Group by
+	 Current_Occupation
+Order by 
+	Number_of_People_with_Certifications
+/**Explore comfort with adopting new technologies across occupations. **/
+Select 
+	Current_Occupation,
+	avg(Technology_Adoption) AS AVG_Technology_adoption
+From 
+	career_change_prediction_dataset
+Group by
+	Current_Occupation
+/****** Explore comfort with adopting new technologies across occupations. ******/
+SELECT 
+    Current_Occupation,  
+    AVG(Technology_Adoption) AS Average_Technology_Adoption
+FROM 
+    career_change_prediction_dataset
+GROUP BY 
+    Current_Occupation;
+/****** Compare salaries of men and women in the same occupation and experience level ******/
+WITH ExperienceCategorized AS (
+    SELECT  
+        Current_Occupation,
+        Gender,
+        CASE           
+            WHEN Years_of_Experience BETWEEN 0 AND 5 THEN 'Entry-Level (0–5 years)'
+            WHEN Years_of_Experience BETWEEN 6 AND 10 THEN 'Early Mid-Level (6–10 years)'
+            WHEN Years_of_Experience BETWEEN 11 AND 20 THEN 'Mid-Level (11–20 years)'
+            WHEN Years_of_Experience BETWEEN 21 AND 30 THEN 'Senior-Level (21–30 years)'
+            WHEN Years_of_Experience > 30 THEN 'Veteran-Level (31+ years)'
+            ELSE 'Unknown'
+        END AS Experience_Level,
+        Salary
+    FROM 
+        career_change_prediction_dataset
+),
+AggregatedSalaries AS (
+    SELECT 
+        Current_Occupation,
+        Gender,
+        Experience_Level,
+        AVG(Salary) AS Average_Salary
+    FROM 
+        ExperienceCategorized
+    GROUP BY 
+        Current_Occupation, Gender, Experience_Level
+)
+SELECT 
+    Experience_Level,
+    Current_Occupation,
+    Gender,
+    Average_Salary
+FROM 
+    AggregatedSalaries
+ORDER BY 
+    Experience_Level, Current_Occupation, Gender;
